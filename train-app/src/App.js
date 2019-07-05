@@ -21,7 +21,6 @@ class Button extends React.Component
   }
 
   render() {
-    console.log(this.state.isToggleOn);    
     return (
       <button onClick={this.handleClick}>
         {this.state.isToggleOn ? 'Show' : 'Hide'}
@@ -31,25 +30,38 @@ class Button extends React.Component
 }
 
 // filters through the data
-class Filter extends React.Component
+class FilterMenu extends React.Component
 {
   constructor(props)
   {
     super(props);
-    this.state = {lineValue: null, serviceTypeValue: null, carCountValue: null};
+    this.state = {
+      linevalue: null, 
+      servicetypevalue: null, 
+      carcountvalue: null
+    };
 
     this.handleChange = this.handleChange.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
+    this.updateTrainPositionsFilter = this.updateTrainPositionsFilter.bind(this);
   }
 
   handleChange(event)
   {
-    this.setState({value: event.target.value});
+    console.log(event.target.value);
+    this.setState({ [event.target.name] : event.target.value }, this.updateTrainPositionsFilter);
   }
 
   handleSubmit(event)
   {
+    alert('Searching for ' + this.state.linevalue + ' ' + this.state.servicetypevalue + ' ' + this.state.carcountvalue + ' type of train.');
     event.preventDefault();
+  }
+
+  updateTrainPositionsFilter()
+  {
+    console.log(this.state);
+    this.props.filterData(this.state);
   }
   
   render()
@@ -59,13 +71,14 @@ class Filter extends React.Component
         
         <label>
           What line?
-          <select lineValue ={this.state.lineValue} onChange = {this.handleChange}>
-            <option lineValue="RD">Red</option>
-            <option lineValue="BL">Blue</option>
-            <option lineValue="YL">Yellow</option>
-            <option lineValue="OR">Orange</option>
-            <option lineValue="GR">Green</option>
-            <option lineValue="SV">Silver</option>
+          <select name = "linevalue" linevalue ={this.state.linevalue} onChange = {this.handleChange}>
+            <option linevalue></option>
+            <option linevalue="RD">Red</option>
+            <option linevalue="BL">Blue</option>
+            <option linevalue="YL">Yellow</option>
+            <option linevalue="OR">Orange</option>
+            <option linevalue="GR">Green</option>
+            <option linevalue="SV">Silver</option>
           </select>
         </label>
         
@@ -73,11 +86,12 @@ class Filter extends React.Component
        
         <label>
           Which service type?
-          <select serviceTypeValue ={this.state.serviceTypeValue} onChange = {this.handleChange}>
-            <option serviceTypeValue="NoPassengers">No Passengers</option>
-            <option serviceTypeValue="Normal">Normal</option>
-            <option serviceTypeValue="Special">Special</option>
-            <option serviceTypeValue="Unknown">Unknown</option>
+          <select name ="servicetypevalue" servicetypevalue ={this.state.servicetypevalue} onChange = {this.handleChange}>
+            <option servicetypevalue></option>
+            <option servicetypevalue="NoPassengers">No Passengers</option>
+            <option servicetypevalue="Normal">Normal</option>
+            <option servicetypevalue="Special">Special</option>
+            <option servicetypevalue="Unknown">Unknown</option>
           </select>
         </label>
 
@@ -85,10 +99,11 @@ class Filter extends React.Component
 
         <label>
           Which car count?
-          <select carCountValue ={this.state.carCountValue} onChange = {this.handleChange}>
-            <option carCountValue="0">0</option>
-            <option carCountValue="6">6</option>
-            <option carCountValue="8">8</option>
+          <select name = "carcountvalue" carcountvalue ={this.state.carcountvalue} onChange = {this.handleChange}>
+            <option carcountvalue></option>
+            <option carcountvalue="0">0</option>
+            <option carcountvalue="6">6</option>
+            <option carcountvalue="8">8</option>
           </select>
         </label>
 
@@ -108,8 +123,10 @@ class TrainPositions extends React.Component
     this.state = {
       error: null,
       isLoaded: false,
-      TrainPositions: {}
+      TrainPositions: {},
+      lineFilter: null
     };
+    this.filterData = this.filterData.bind(this);
   }
 
   //fetch the WMATA Train Positions API
@@ -144,8 +161,16 @@ class TrainPositions extends React.Component
     )
   }
 
+  filterData(_State)
+  {
+    console.log(_State);
+  }
+
   render() {
     const { error, isLoaded, TrainPositions } = this.state;
+
+    
+
     if (error) 
     {
       return <div>Error: {error.message}</div>;
@@ -157,13 +182,16 @@ class TrainPositions extends React.Component
     else
     {
       return (
-        <ul>
-          {TrainPositions.map(TrainPositions =>(
-            <li key={TrainPositions.TrainId}>
-              Train #{TrainPositions.TrainId}, Line: {TrainPositions.LineCode}, Service Type: {TrainPositions.ServiceType}, Car Count: {TrainPositions.CarCount}
-            </li>
-          ))}
-        </ul>
+        <div>
+          <FilterMenu filterData = {this.updateTrainPositionsFilter}/>
+          <ul>
+            {TrainPositions.map(TrainPositions =>(
+              <li key={TrainPositions.TrainId}>
+                Train #{TrainPositions.TrainId}, Line: {TrainPositions.LineCode}, Service Type: {TrainPositions.ServiceType}, Car Count: {TrainPositions.CarCount}
+              </li>
+            ))}
+          </ul>
+        </div>
       );
     }
   }
@@ -178,8 +206,6 @@ function App() {
           WMATA Metro Train App
         </p>
         <Button showTrainPositions/>
-        <Filter>
-        </Filter>
         <TrainPositions/>
       </header>
     </div>
