@@ -2,33 +2,6 @@ import React from 'react';
 import logo from './logo.svg';
 import './App.css';
 
-// button that toggles on and off
-class Button extends React.Component
-{
-  constructor(props)
-  {
-    super(props);
-    this.state = {isToggleOn: true};
-
-    this.handleClick = this.handleClick.bind(this);
-  }
-
-  handleClick()
-  {
-    this.setState(state => ({
-      isToggleOn: !state.isToggleOn
-    }));
-  }
-
-  render() {
-    return (
-      <button onClick={this.handleClick}>
-        {this.state.isToggleOn ? 'Show' : 'Hide'}
-      </button>
-    );
-  }
-}
-
 // filters through the data
 class FilterMenu extends React.Component
 {
@@ -43,25 +16,26 @@ class FilterMenu extends React.Component
 
     this.handleChange = this.handleChange.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
-    this.updateTrainPositionsFilter = this.updateTrainPositionsFilter.bind(this);
   }
 
   handleChange(event)
   {
     console.log(event.target.value);
-    this.setState({ [event.target.name] : event.target.value }, this.updateTrainPositionsFilter);
+    this.setState({ [event.target.name] : event.target.value });
   }
 
   handleSubmit(event)
   {
-    alert('Searching for ' + this.state.linevalue + ' ' + this.state.servicetypevalue + ' ' + this.state.carcountvalue + ' type of train.');
     event.preventDefault();
+    alert('Searching for ' + this.state.linevalue + ' ' + this.state.servicetypevalue + ' ' + this.state.carcountvalue + ' type of train.');
+    console.log(this.lineFilter);
+    console.log(this.serviceTypeFilter);
+    console.log(this.carCountFilter);
   }
 
-  updateTrainPositionsFilter()
+  componentDidMount()
   {
-    console.log(this.state);
-    this.props.filterData(this.state);
+    this.props.passRefUpward(this.refs);
   }
   
   render()
@@ -71,7 +45,7 @@ class FilterMenu extends React.Component
         
         <label>
           What line?
-          <select name = "linevalue" linevalue ={this.state.linevalue} onChange = {this.handleChange}>
+          <select name = "linevalue" linevalue ={this.state.linevalue} onChange = {this.handleChange} ref={lineFilter => this.lineFilter = lineFilter}>
             <option linevalue></option>
             <option linevalue="RD">Red</option>
             <option linevalue="BL">Blue</option>
@@ -86,7 +60,7 @@ class FilterMenu extends React.Component
        
         <label>
           Which service type?
-          <select name ="servicetypevalue" servicetypevalue ={this.state.servicetypevalue} onChange = {this.handleChange}>
+          <select name ="servicetypevalue" servicetypevalue ={this.state.servicetypevalue} onChange = {this.handleChange} ref={serviceTypeFilter => this.serviceTypeFilter = serviceTypeFilter}>
             <option servicetypevalue></option>
             <option servicetypevalue="NoPassengers">No Passengers</option>
             <option servicetypevalue="Normal">Normal</option>
@@ -99,7 +73,7 @@ class FilterMenu extends React.Component
 
         <label>
           Which car count?
-          <select name = "carcountvalue" carcountvalue ={this.state.carcountvalue} onChange = {this.handleChange}>
+          <select name = "carcountvalue" carcountvalue ={this.state.carcountvalue} onChange = {this.handleChange} ref={carCountFilter => this.carCountFilter = carCountFilter}>
             <option carcountvalue></option>
             <option carcountvalue="0">0</option>
             <option carcountvalue="6">6</option>
@@ -108,7 +82,7 @@ class FilterMenu extends React.Component
         </label>
 
         <br />
-        <input type="submit" value="Submit"/>
+        <input type="submit" value="Submit" />
       </form>
     )
   }
@@ -126,7 +100,15 @@ class TrainPositions extends React.Component
       TrainPositions: {},
       lineFilter: null
     };
-    this.filterData = this.filterData.bind(this);
+    this.getRefsFromFilterMenu = this.getRefsFromFilterMenu.bind(this);
+  }
+
+  getRefsFromFilterMenu(childRefs)
+  {
+    this.setState({
+      myRefs: childRefs
+    });
+    console.log(this.state.myRefs);
   }
 
   //fetch the WMATA Train Positions API
@@ -161,11 +143,6 @@ class TrainPositions extends React.Component
     )
   }
 
-  filterData(_State)
-  {
-    console.log(_State);
-  }
-
   render() {
     const { error, isLoaded, TrainPositions } = this.state;
 
@@ -183,14 +160,18 @@ class TrainPositions extends React.Component
     {
       return (
         <div>
-          <FilterMenu filterData = {this.updateTrainPositionsFilter}/>
-          <ul>
-            {TrainPositions.map(TrainPositions =>(
-              <li key={TrainPositions.TrainId}>
-                Train #{TrainPositions.TrainId}, Line: {TrainPositions.LineCode}, Service Type: {TrainPositions.ServiceType}, Car Count: {TrainPositions.CarCount}
-              </li>
-            ))}
-          </ul>
+          <FilterMenu passRefUpward = {this.getRefsFromFilterMenu}/>
+          <table>
+            <tbody>{TrainPositions.map(TrainPositions =>(
+              <tr key={TrainPositions.TrainId}>
+                <td>Train #{TrainPositions.TrainNumber}</td> 
+                <td>Line: {TrainPositions.LineCode}</td> 
+                <td>Service Type: {TrainPositions.ServiceType}</td> 
+                <td>Car Count: {TrainPositions.CarCount}</td>
+              </tr>
+            ))}</tbody>
+          </table>
+
         </div>
       );
     }
@@ -205,7 +186,6 @@ function App() {
         <p>
           WMATA Metro Train App
         </p>
-        <Button showTrainPositions/>
         <TrainPositions/>
       </header>
     </div>
